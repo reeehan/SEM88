@@ -1,0 +1,106 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import tensorflow
+import keras
+
+
+
+
+
+train_df = pd.read_csv("fashion-mnist_train.csv")
+train_df.head()
+
+
+
+
+
+test_df = pd.read_csv("fashion-mnist_test.csv")
+test_df.head()
+
+
+
+
+
+x_train = train_df.drop(columns=["label"]).values 
+y_train = train_df["label"].values 
+x_test = test_df.drop(columns=["label"]).values 
+y_test = test_df["label"].values 
+
+
+
+
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
+
+
+
+
+
+from keras.models import Sequential
+from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense
+
+model = Sequential()
+
+model.add(Input(shape=(28, 28, 1)))  # ✅ Proper way
+
+model.add(Conv2D(64, (3,3), activation="relu"))
+model.add(MaxPooling2D((2,2)))
+model.add(Conv2D(32, (3,3), activation="relu"))
+model.add(MaxPooling2D((2,2)))
+model.add(Flatten())
+model.add(Dense(16, activation="relu"))
+model.add(Dense(10, activation="softmax"))
+
+
+
+
+
+
+
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+
+
+
+
+model.fit(x=x_train, y=y_train, batch_size=32, epochs=5, validation_split=0.2)
+
+
+
+
+
+
+plt.plot(model.history.history["loss"], label="Training Loss")
+plt.plot(model.history.history["val_loss"], label="Validation Loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss MSE")
+plt.legend()
+plt.show()
+
+
+
+
+
+
+loss, accuracy = model.evaluate(x=x_test, y=y_test)
+
+print("Loss : ", loss)
+print("Accuracy : ", accuracy*100) 
+
+
+
+
+
+predictions = model.predict(x_test[:5])
+predicted_classes = np.argmax(predictions, axis=1)
+true_classes = y_test[:5]
+
+print("Predicted : ", predicted_classes)
+print("True : ", true_classes)
+
+
+
+
+
+

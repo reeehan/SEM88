@@ -1,0 +1,228 @@
+!pip install numpy pandas matplotlib seaborn scikit-learn tensorflow pydot graphviz
+
+
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import tensorflow as tf
+
+from sklearn.metrics import confusion_matrix, classification_report
+
+import warnings
+warnings.filterwarnings("ignore")
+
+
+
+
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()
+
+
+
+
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# Add channel dimension for CNN
+x_train = x_train[..., np.newaxis]
+x_test = x_test[..., np.newaxis]
+
+
+
+
+
+class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+
+
+
+
+
+plt.figure(figsize=(10,10))
+for i in range(25):
+    plt.subplot(5,5,i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(x_train[i].squeeze(), cmap='gray')
+    plt.xlabel(class_names[y_train[i]])
+plt.show()
+
+
+
+
+
+
+
+model = tf.keras.models.Sequential([
+    tf.keras.Input(shape=(28, 28, 1)),
+
+    tf.keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+    tf.keras.layers.AvgPool2D(pool_size=(2,2)),
+
+    tf.keras.layers.Conv2D(32, (3,3), activation='relu', padding='same'),
+    tf.keras.layers.AvgPool2D(pool_size=(2,2)),
+
+    tf.keras.layers.GlobalAveragePooling2D(),
+
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+
+
+
+
+
+
+
+
+
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+
+
+
+
+
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+
+
+
+
+
+history = model.fit(
+    x_train, y_train,
+    epochs=10,
+    validation_data=(x_test, y_test)
+)
+
+
+
+
+
+tf.keras.utils.plot_model(model, show_shapes=True)
+
+
+
+
+model.summary()
+
+
+
+
+
+pd.DataFrame(history.history).plot(figsize=(10,7))
+plt.title("Metrics Graph")
+plt.show()
+
+
+
+
+
+model.evaluate(x_test, y_test)
+
+
+
+
+predictions = model.predict(x_test)
+
+
+
+
+
+predictions = tf.argmax(predictions, axis=1)
+
+
+
+
+testY_cat = tf.keras.utils.to_categorical(y_test)
+y_test = tf.argmax(testY_cat, axis=1)
+
+
+
+
+
+y_test = tf.Variable(y_test)
+
+
+
+
+
+from sklearn import metrics
+
+print(metrics.accuracy_score(y_test, predictions))
+
+
+
+
+
+print(metrics.classification_report(y_test, predictions))
+
+
+
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+cm = confusion_matrix(y_test, predictions)
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+disp.plot(cmap='Blues')
+
+plt.title("Confusion Matrix")
+plt.show()
+
+
+
+
+
+import random
+
+images = []
+labels = []
+
+random_indices = random.sample(range(len(x_test)), 10)
+
+for idx in random_indices:
+    images.append(x_test[idx])
+    labels.append(y_test[idx])
+
+images = np.array(images)
+labels = np.array(labels)
+
+fig = plt.figure(figsize=(20, 8))
+rows = 2
+cols = 5
+x = 1
+
+for image, label in zip(images, labels):
+    fig.add_subplot(rows, cols, x)
+
+    prediction = model.predict(tf.expand_dims(image, axis=0))
+    prediction = class_names[np.argmax(prediction)]
+
+    label = class_names[label]
+
+    plt.title(f"Label: {label}, Prediction: {prediction}")
+    plt.imshow(image.squeeze(), cmap='gray')
+    plt.axis("off")
+
+    x += 1
+
+plt.show()
+
+
+
+
+
+

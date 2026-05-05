@@ -1,0 +1,51 @@
+https://colab.research.google.com
+
+in runtime change type to gpu
+
+
+then cuda file
+
+%%writefile vector_add.cu
+#include <iostream>
+using namespace std;
+
+__global__ void add(int *A, int *B, int *C, int n) {
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i < n) C[i] = A[i] + B[i];
+}
+
+int main() {
+    int n = 5;
+    int A[] = {1,2,3,4,5};
+    int B[] = {5,4,3,2,1};
+    int C[5];
+
+    int *dA, *dB, *dC;
+
+    cudaMalloc(&dA, sizeof(A));
+    cudaMalloc(&dB, sizeof(B));
+    cudaMalloc(&dC, sizeof(C));
+
+    cudaMemcpy(dA, A, sizeof(A), cudaMemcpyHostToDevice);
+    cudaMemcpy(dB, B, sizeof(B), cudaMemcpyHostToDevice);
+
+    add<<<1,5>>>(dA, dB, dC, n);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(C, dC, sizeof(C), cudaMemcpyDeviceToHost);
+
+    cout << "Result:\n";
+    for(int i=0;i<n;i++) cout << C[i] << " ";
+
+    return 0;
+}
+
+
+
+
+
+!nvcc vector_add.cu -o vector_add
+
+
+
+!./vector_add
